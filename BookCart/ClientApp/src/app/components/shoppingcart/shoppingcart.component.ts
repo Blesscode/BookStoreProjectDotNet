@@ -77,7 +77,7 @@ export class ShoppingcartComponent implements OnInit {
   private readonly store = inject(Store);
   protected readonly loadingState = LoadingState;
 
-  protected readonly cartItems$ = combineLatest([
+  /*protected readonly cartItems$ = combineLatest([
     this.store.select(selectCartItems),
     this.store.select(selectCartCallState),
   ]).pipe(
@@ -87,6 +87,23 @@ export class ShoppingcartComponent implements OnInit {
         0
       );
       return { items, total, callState };
+    })
+  );*/
+  protected readonly cartItems$ = combineLatest([
+    this.store.select(selectCartItems),
+    this.store.select(selectCartCallState),
+  ]).pipe(
+    map(([items, callState]) => {
+      const safeItems = (items ?? []).filter(
+        (i) => i != null && i.book != null
+      );
+
+      const total = safeItems.reduce(
+        (total, item) => total + (item.book?.price ?? 0) * (item.quantity ?? 0),
+        0
+      );
+
+      return { items: safeItems, total, callState };
     })
   );
 

@@ -9,10 +9,57 @@ namespace BookCart.DataAccess
     {
         readonly BookDBContext _dbContext = dbContext;
 
+        /* public void CreateOrder(int userId, Checkout orderDetails)
+         {
+             try
+             {
+                 StringBuilder orderid = new StringBuilder();
+                 orderid.Append(CreateRandomNumber(3));
+                 orderid.Append('-');
+                 orderid.Append(CreateRandomNumber(6));
+
+                 CustomerOrders customerOrder = new()
+                 {
+                     OrderId = orderid.ToString(),
+                     UserId = userId,
+                     DateCreated = DateTime.Now.Date,
+                     CartTotal = orderDetails.CartTotal
+                 };
+                 _dbContext.CustomerOrders.Add(customerOrder);
+                 _dbContext.SaveChanges();
+
+                 foreach (CartItemDto order in orderDetails.OrderDetails)
+                 {
+                     CustomerOrderDetails productDetails = new()
+                     {
+                         OrderId = orderid.ToString(),
+                         ProductId = order.Book.BookId,
+                         Quantity = order.Quantity,
+                         Price = order.Book.Price
+                     };
+                     _dbContext.CustomerOrderDetails.Add(productDetails);
+                     _dbContext.SaveChanges();
+                 }
+             }
+             catch
+             {
+                 throw;
+             }
+         }*/
         public void CreateOrder(int userId, Checkout orderDetails)
         {
             try
             {
+                if (orderDetails == null)
+                {
+                    throw new ArgumentNullException(nameof(orderDetails), "Checkout details cannot be null.");
+                }
+
+                if (orderDetails.OrderDetails == null || !orderDetails.OrderDetails.Any())
+                {
+                    throw new InvalidOperationException("Order must contain at least one item.");
+                }
+
                 StringBuilder orderid = new StringBuilder();
                 orderid.Append(CreateRandomNumber(3));
                 orderid.Append('-');
@@ -25,11 +72,29 @@ namespace BookCart.DataAccess
                     DateCreated = DateTime.Now.Date,
                     CartTotal = orderDetails.CartTotal
                 };
+
                 _dbContext.CustomerOrders.Add(customerOrder);
                 _dbContext.SaveChanges();
 
-                foreach (CartItemDto order in orderDetails.OrderDetails)
+
+                //state logging before for-each:
+                Console.WriteLine($"CartTotal: {orderDetails.CartTotal}");
+                Console.WriteLine($"OrderDetails count: {orderDetails.OrderDetails?.Count()}");
+
+
+                foreach (CartItemDto? order in orderDetails.OrderDetails!)
                 {
+
+                    if (order == null || order.Book == null)
+                    {
+                        // Skip or throw depending on business rules
+                        continue;
+                        // throw new InvalidOperationException("Order item or book cannot be null.");
+                    }
+
+                    Console.WriteLine($"Order: {(order == null ? "null" : "ok")}");
+                    Console.WriteLine($"Book: {(order?.Book == null ? "null" : "ok")}");
+
                     CustomerOrderDetails productDetails = new()
                     {
                         OrderId = orderid.ToString(),
@@ -37,12 +102,14 @@ namespace BookCart.DataAccess
                         Quantity = order.Quantity,
                         Price = order.Book.Price
                     };
+
                     _dbContext.CustomerOrderDetails.Add(productDetails);
                     _dbContext.SaveChanges();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"[CreateOrder] Error: {ex}");
                 throw;
             }
         }

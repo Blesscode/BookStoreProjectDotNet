@@ -12,7 +12,7 @@
     </div>
     }
   </mat-card-header>
-  @if (cartItems?.items.length > 0) {
+  @if (cartItems?.items?.length > 0) {
   <mat-card-content class="my-3">
     <table mat-table [dataSource]="cartItems.items">
       <ng-container matColumnDef="image">

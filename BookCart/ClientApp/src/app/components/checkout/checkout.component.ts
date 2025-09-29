@@ -77,7 +77,7 @@ export class CheckoutComponent {
     return this.checkOutForm.controls;
   }
 
-  protected readonly checkOutItems$ = combineLatest([
+  /*protected readonly checkOutItems$ = combineLatest([
     this.store.select(selectCartItems),
     this.store.select(selectCartCallState),
   ]).pipe(
@@ -91,6 +91,27 @@ export class CheckoutComponent {
         this.checkOutForm.disable();
       }
       return { items, callState };
+    })
+  );*/
+    protected readonly checkOutItems$ = combineLatest([
+    this.store.select(selectCartItems),
+    this.store.select(selectCartCallState),
+  ]).pipe(
+    map(([items, callState]) => {
+      const safeItems = (items ?? []).filter(
+        (i) => i != null && i.book != null
+      ); // ensures items is always a valid array of non-null objects
+
+      if (safeItems.length > 0) {
+        this.totalPrice = safeItems.reduce(
+          (total, item) => total + (item.book?.price ?? 0) * (item.quantity ?? 0),
+          0
+        );
+      } else if (safeItems.length === 0 && callState === LoadingState.LOADED) {
+        this.checkOutForm.disable();
+      }
+
+      return { items: safeItems, callState };
     })
   );
 
